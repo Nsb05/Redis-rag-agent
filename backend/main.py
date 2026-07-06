@@ -103,6 +103,7 @@ async def health_check() -> dict:
     return {
         "status": "ok" if redis_ok else "degraded",
         "redis": "connected" if redis_ok else "unreachable",
+        "redis_url_configured": settings.redis_url,  # Added for debugging
         "embedding_model": settings.embedding_model,
         "llm": settings.groq_model,
         "groq_key_set": bool(settings.groq_api_key),
