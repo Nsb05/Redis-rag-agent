@@ -1,6 +1,6 @@
 /* ---- app.js: AI Agent Long-Term Memory (RAG) UI Logic ---- */
 
-const API = 'http://localhost:8000';
+const API = ''; // Empty string so API calls use relative paths (e.g., /chat instead of http://localhost:8000/chat)
 let sessionId = 'session-' + Math.random().toString(36).slice(2, 9);
 let memories = [];
 let totalMemories = 0;
