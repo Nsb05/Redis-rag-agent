@@ -3,10 +3,10 @@ uvicorn
 redis>=5.0.0
 
 groq
-sentence-transformers
-python-dotenv
-python-multipart
-numpy
+sentence-transformers==3.3.1
+numpy<2
 pydantic
 pydantic-settings
 httpx
+python-dotenv
+python-multipart

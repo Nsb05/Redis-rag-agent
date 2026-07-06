@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 FROM python:3.11-slim
 
-# System dependencies needed for sentence-transformers
+# System dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     curl \
@@ -9,21 +9,22 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-# ── Install CPU-only PyTorch first (much smaller: ~200 MB vs ~800 MB full) ──
-# This must come before requirements.txt so pip doesn't pull in the GPU version.
+# ── CPU-only PyTorch 2.5.1 (compatible with sentence-transformers 3.3.1) ─────
+# Must install before requirements.txt so pip doesn't pull in the GPU build.
 RUN pip install --no-cache-dir \
-    torch==2.2.2+cpu \
+    "torch==2.5.1+cpu" \
+    "torchvision==0.20.1+cpu" \
     --index-url https://download.pytorch.org/whl/cpu
 
-# ── Install remaining Python dependencies ────────────────────────────────────
+# ── Remaining Python dependencies ─────────────────────────────────────────────
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# ── Pin the HuggingFace cache to /app/.cache so build & runtime agree ────────
+# ── Pin cache dirs so build-time model is found at runtime ────────────────────
 ENV HF_HOME=/app/.cache/huggingface
 ENV SENTENCE_TRANSFORMERS_HOME=/app/.cache/sentence_transformers
 
-# Pre-download the embedding model at build time (weights baked into the image)
+# Pre-download the model at build time (weights baked into the image)
 RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2')"
 
 # ── Copy application code ─────────────────────────────────────────────────────
