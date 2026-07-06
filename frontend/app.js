@@ -489,7 +489,8 @@ if (uploadForm) {
         loadStats();
         showToast(`${data.chunks_stored} memories added!`, 'success');
       } else {
-        showResult(resultEl, 'error', `Error: ${data.detail}`);
+        const errMsg = data.detail || data.message || JSON.stringify(data);
+        showResult(resultEl, 'error', `Error: ${errMsg}`);
       }
     } catch {
       showResult(resultEl, 'error', 'Network error — is the backend running?');
@@ -527,7 +528,8 @@ if (addMemoryForm) {
         loadStats();
         showToast('Memory added!', 'success');
       } else {
-        showResult(resultEl, 'error', `Error: ${data.detail}`);
+        const errMsg = data.detail || data.message || JSON.stringify(data);
+        showResult(resultEl, 'error', `Error: ${errMsg}`);
       }
     } catch {
       showResult(resultEl, 'error', 'Network error.');
