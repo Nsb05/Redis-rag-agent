@@ -61,7 +61,9 @@ class RedisMemoryStore:
         if self._client is None:
             self._client = redis.from_url(
                 settings.redis_url,
-                decode_responses=False,  # We store binary embeddings
+                decode_responses=False,   # We store binary embeddings
+                socket_timeout=3,          # Fail fast if Redis is unreachable
+                socket_connect_timeout=3,
             )
         return self._client
 
