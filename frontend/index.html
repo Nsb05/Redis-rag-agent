@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Agent Memory — Redis RAG</title>
+  <meta name="description" content="AI Agent with long-term memory powered by Redis Vector Search (HNSW) and GPT-4o. Store document embeddings and perform sub-millisecond semantic retrieval." />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- Neural network background -->
+<canvas id="neural-canvas"></canvas>
+
+<div class="app-shell">
+
+  <!-- ── Header ──────────────────────────────────────────── -->
+  <header class="header">
+    <div class="header-brand">
+      <div class="brand-icon">🧠</div>
+      <div class="brand-text">
+        <h1>AI Agent Memory</h1>
+        <p>Redis Vector DB · HNSW · GPT-4o · RAG</p>
+      </div>
+    </div>
+
+    <div class="header-status">
+      <div class="status-badge">
+        <div class="status-dot loading" id="redis-dot"></div>
+        <span id="redis-text">Connecting…</span>
+      </div>
+
+      <div class="stat-chip">
+        🧠 <span id="header-mem-count">—</span> memories
+      </div>
+
+      <div class="stat-chip">
+        ⚡ <span id="header-latency">—</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── Main layout ──────────────────────────────────────── -->
+  <div class="main-layout">
+
+    <!-- ── Left pane: Chat + Upload ─────────────────────── -->
+    <div class="left-pane">
+
+      <!-- Tab bar -->
+      <div class="tab-bar">
+        <button class="tab-btn active" data-tab="tab-chat" id="tab-chat-btn">
+          💬 Chat
+        </button>
+        <button class="tab-btn" data-tab="tab-upload" id="tab-upload-btn">
+          📄 Add Knowledge
+        </button>
+      </div>
+
+      <div class="tab-content">
+
+        <!-- ── Chat Tab ──────────────────────────────────── -->
+        <div class="tab-panel active" id="tab-chat">
+          <div class="chat-messages" id="chat-messages">
+
+            <!-- Welcome card -->
+            <div class="welcome-card" id="welcome-card">
+              <h2>🧠 Long-Term Memory Agent</h2>
+              <p>
+                This AI agent uses <strong>Redis Stack</strong> as a vector database to store and retrieve memories using
+                <strong>HNSW semantic search</strong>. Feed it knowledge, then ask questions — it remembers everything.
+              </p>
+              <div class="feature-list">
+                <div class="feature-item">
+                  <span class="fi-icon">⚡</span>
+                  <div>
+                    <strong>Sub-millisecond retrieval</strong><br>
+                    <span style="color:var(--text-muted);font-size:11px">HNSW index with COSINE distance on 384-dim vectors</span>
+                  </div>
+                </div>
+                <div class="feature-item">
+                  <span class="fi-icon">🔒</span>
+                  <div>
+                    <strong>Local embeddings</strong><br>
+                    <span style="color:var(--text-muted);font-size:11px">all-MiniLM-L6-v2 runs on your machine — no data sent for embeddings</span>
+                  </div>
+                </div>
+                <div class="feature-item">
+                  <span class="fi-icon">🔍</span>
+                  <div>
+                    <strong>Dual memory</strong><br>
+                    <span style="color:var(--text-muted);font-size:11px">Short-term (session) + Long-term (Redis vector store)</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div><!-- /chat-messages -->
+
+          <!-- Chat input -->
+          <div class="chat-input-area">
+            <div class="session-bar">
+              <label for="session-id">Session ID:</label>
+              <input type="text" id="session-id" placeholder="session-abc123" spellcheck="false" />
+            </div>
+            <div class="chat-input-row">
+              <textarea
+                id="chat-input"
+                class="chat-textarea"
+                placeholder="Ask anything… the agent will search its long-term memory for context."
+                rows="1"
+                spellcheck="true"
+              ></textarea>
+              <button class="btn-send" id="send-btn" title="Send (Enter)">➤</button>
+            </div>
+          </div>
+        </div><!-- /tab-chat -->
+
+        <!-- ── Upload / Add Knowledge Tab ───────────────── -->
+        <div class="tab-panel" id="tab-upload">
+          <div class="upload-panel" style="overflow-y:auto">
+
+            <!-- Document upload section -->
+            <div style="margin-bottom:28px">
+              <div class="panel-title">📄 Upload Document</div>
+              <div class="panel-sub">Paste text or upload a .txt file. The content will be auto-chunked, embedded, and stored in Redis as long-term memories.</div>
+
+              <form id="upload-form">
+                <div class="form-group">
+                  <label class="form-label" for="doc-source">Source Label</label>
+                  <input type="text" id="doc-source" class="form-input" placeholder="e.g. Wikipedia, meeting-notes, book-chapter" />
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="doc-tags">Tags (optional)</label>
+                  <input type="text" id="doc-tags" class="form-input" placeholder="e.g. tech, science, personal" />
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="doc-text">Text Content</label>
+                  <textarea id="doc-text" class="form-textarea" placeholder="Paste document content here…"></textarea>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Or Upload a .txt File</label>
+                  <div class="drop-zone" id="drop-zone">
+                    <input type="file" id="doc-file" accept=".txt,.md,.csv" />
+                    <div class="drop-zone-icon">📁</div>
+                    <div class="drop-zone-text">Click to browse or drag & drop</div>
+                    <div class="drop-zone-hint">.txt, .md, .csv files</div>
+                  </div>
+                </div>
+
+                <button type="submit" class="btn-primary">⬆ Store in Memory</button>
+                <div id="upload-result" class="upload-result" style="display:none"></div>
+              </form>
+            </div>
+
+            <!-- Divider -->
+            <div style="border-top:1px solid var(--border);margin:4px 0 24px"></div>
+
+            <!-- Manual memory add section -->
+            <div>
+              <div class="panel-title">✍️ Add Single Memory</div>
+              <div class="panel-sub">Add a specific fact or note directly — no chunking applied.</div>
+
+              <form id="add-memory-form">
+                <div class="form-group">
+                  <label class="form-label" for="manual-source">Source</label>
+                  <input type="text" id="manual-source" class="form-input" placeholder="manual" />
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="manual-tags">Tags</label>
+                  <input type="text" id="manual-tags" class="form-input" placeholder="optional tags" />
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="manual-text">Memory Content</label>
+                  <textarea id="manual-text" class="form-textarea" style="min-height:100px" placeholder="The user's name is Alex. They prefer Python over JavaScript…"></textarea>
+                </div>
+
+                <button type="submit" class="btn-primary">🧠 Add Memory</button>
+                <div id="add-memory-result" class="upload-result" style="display:none"></div>
+              </form>
+            </div>
+
+          </div>
+        </div><!-- /tab-upload -->
+
+      </div><!-- /tab-content -->
+    </div><!-- /left-pane -->
+
+    <!-- ── Right sidebar — Memory Explorer ──────────────── -->
+    <div class="right-pane">
+      <div class="sidebar-header">
+        <div class="sidebar-title">
+          <span>🗄 Memory Explorer</span>
+          <span class="memory-count-badge" id="memory-count">0</span>
+        </div>
+        <div class="search-input-wrap">
+          <span class="search-icon">🔍</span>
+          <input
+            type="text"
+            class="search-input"
+            id="memory-search"
+            placeholder="Semantic search memories…"
+          />
+        </div>
+        <div class="search-results-info" id="search-info">
+          Loading memories…
+        </div>
+      </div>
+
+      <div class="sidebar-actions">
+        <button class="btn-ghost" id="refresh-memories-btn">↻ Refresh</button>
+        <button class="btn-danger" id="clear-all-btn">🗑 Clear All</button>
+      </div>
+
+      <!-- Redis info card -->
+      <div class="redis-info-card" id="redis-info-card">
+        <h4>🔧 System Info</h4>
+        <div class="info-row"><span class="info-key">Redis</span><span class="info-val">Connecting…</span></div>
+      </div>
+
+      <!-- Memory cards list -->
+      <div class="memory-list" id="memory-list">
+        <div class="empty-state">
+          <div class="empty-icon">⏳</div>
+          <div class="empty-title">Loading memories…</div>
+        </div>
+      </div>
+
+      <!-- Bottom stats -->
+      <div class="stats-panel">
+        <div class="stat-item">
+          <div class="stat-label">Memories</div>
+          <div class="stat-value" id="stat-mem-count">—</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Vector Dim</div>
+          <div class="stat-value" id="stat-dim">384<span class="stat-unit">d</span></div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Index</div>
+          <div class="stat-value" style="font-size:11px;padding-top:4px" id="stat-index">HNSW</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Model</div>
+          <div class="stat-value" style="font-size:9px;padding-top:4px;word-break:break-all" id="stat-model">MiniLM</div>
+        </div>
+      </div>
+    </div><!-- /right-pane -->
+
+  </div><!-- /main-layout -->
+</div><!-- /app-shell -->
+
+<!-- Toast container -->
+<div class="toast-container" id="toast-container"></div>
+
+<script src="app.js"></script>
+</body>
+</html>

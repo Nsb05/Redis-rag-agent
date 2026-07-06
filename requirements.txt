@@ -1,0 +1,12 @@
+fastapi
+uvicorn
+redis>=5.0.0
+
+groq
+sentence-transformers
+python-dotenv
+python-multipart
+numpy
+pydantic
+pydantic-settings
+httpx

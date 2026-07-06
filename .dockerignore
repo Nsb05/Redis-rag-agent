@@ -1,0 +1,28 @@
+# Git
+.git/
+.gitignore
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+venv/
+.venv/
+*.egg-info/
+
+# Environment secrets
+.env
+
+# Model cache (re-downloaded during build via RUN command)
+.cache/
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.log
+
+# Docker itself
+Dockerfile
+.dockerignore
