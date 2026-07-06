@@ -98,6 +98,8 @@ async def startup_event():
 async def health_check() -> dict:
     store = get_memory_store()
     redis_ok = store.ping()
+    # Always return HTTP 200 — Railway healthcheck only checks status code.
+    # Redis connectivity is reported in the body for observability.
     return {
         "status": "ok" if redis_ok else "degraded",
         "redis": "connected" if redis_ok else "unreachable",
